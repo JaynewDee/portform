@@ -3,38 +3,50 @@ use printpdf::*;
 use std::fs::File;
 use std::io::BufWriter;
 
-pub struct PDFGenerator {
+mod models;
+
+pub struct ResumeGenerator {
     title: String,
     filename: String,
     doc: (PdfDocumentReference, PdfPageIndex, PdfLayerIndex),
     pages: Option<Vec<PdfPage>>,
 }
 
-impl Default for PDFGenerator {
+impl Default for ResumeGenerator {
     fn default() -> Self {
-        let title = "My_PDF".to_string();
-        let date_string = Utc::now().to_string().replace(" ", "_");
+        let title = "My_New_Resume".to_string();
+        let date_string: String = Utc::now()
+            .to_string()
+            .chars()
+            .map(|c| match c {
+                ':' | ' ' => '-',
+                _ => c,
+            })
+            .collect();
+
         let filename = format!("{}.pdf", date_string);
 
-        println!("{filename}");
         Self {
             title: title.clone(),
             filename,
-            doc: PdfDocument::new(&title, Mm(247.0), Mm(210.0), "L1"),
+            doc: PdfDocument::new(&title, Mm(210.0), Mm(297.0), "L1"),
             pages: None,
         }
     }
 }
 
-impl PDFGenerator {
+impl ResumeGenerator {
     pub fn initialize() {}
 }
 
-fn main() {
-    let generator = PDFGenerator::default();
-    let (doc, pgIdx, layerIdx) = generator.doc;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let generator = ResumeGenerator::default();
+    let (doc, _pg_idx, _layer_idx) = generator.doc;
 
-    let file = File::create(generator.filename).unwrap();
+    let file = File::create(generator.filename)?;
     let buffer_writer = &mut BufWriter::new(file);
-    doc.save(buffer_writer).unwrap();
+
+    doc.save(buffer_writer)?;
+
+    Ok(())
 }
