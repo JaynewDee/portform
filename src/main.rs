@@ -3,8 +3,28 @@ use printpdf::*;
 use std::fs::File;
 use std::io::BufWriter;
 
+mod cli;
 mod models;
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Get input commands and their data
+
+    let arguments = cli::Cli::matches();
+
+    println!("{:#?}", &arguments);
+
+    let generator = ResumeGenerator::default();
+    let (doc, _pg_idx, _layer_idx) = generator.doc;
+
+    let file = File::create(generator.filename)?;
+    let buffer_writer = &mut BufWriter::new(file);
+
+    doc.save(buffer_writer)?;
+
+    Ok(())
+}
+
+#[allow(dead_code)]
 pub struct ResumeGenerator {
     title: String,
     filename: String,
@@ -37,16 +57,4 @@ impl Default for ResumeGenerator {
 
 impl ResumeGenerator {
     pub fn initialize() {}
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let generator = ResumeGenerator::default();
-    let (doc, _pg_idx, _layer_idx) = generator.doc;
-
-    let file = File::create(generator.filename)?;
-    let buffer_writer = &mut BufWriter::new(file);
-
-    doc.save(buffer_writer)?;
-
-    Ok(())
 }
