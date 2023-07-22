@@ -4,18 +4,22 @@ use serde::{Deserialize, Serialize};
 // General Sections
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DocumentShape {
-    header: Option<Header>,
-    summary: Option<Summary>,
-    employment_history: Option<EmploymentHistory>,
-    projects: Option<Projects>,
-    contact_details: Option<ContactDetails>,
-    skillset: Option<SkillSet>,
-    certifications: Option<Certifications>,
+    pub filename: Option<String>,
+    pub title: Option<String>,
+    pub header: Option<Header>,
+    pub summary: Option<Summary>,
+    pub employment_history: Option<EmploymentHistory>,
+    pub projects: Option<Projects>,
+    pub contact_details: Option<ContactDetails>,
+    pub skillset: Option<SkillSet>,
+    pub certifications: Option<Certifications>,
 }
 
 impl Default for DocumentShape {
     fn default() -> Self {
         Self {
+            filename: Some("My_Current_Resume.pdf".to_string()),
+            title: Some("Joshua_Diehl_Software_Professional".to_string()),
             header: None,
             summary: None,
             employment_history: None,
@@ -26,19 +30,20 @@ impl Default for DocumentShape {
         }
     }
 }
+
 #[derive(Serialize, Deserialize, Debug)]
-struct Header {
-    name: String,
-    profession: String,
+pub struct Header {
+    pub name: String,
+    pub profession: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Summary {
-    body: String,
+pub struct Summary {
+    pub body: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ContactDetails {
+pub struct ContactDetails {
     email: String,
     website: String,
     phone: String,
@@ -46,47 +51,48 @@ struct ContactDetails {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct HistoryEntry {
-    position: String,
-    location: String,
-    dates_employed: (String, String),
-    descriptions: Vec<String>,
+pub struct HistoryEntry {
+    pub position: String,
+    pub location: String,
+    pub dates_employed: (String, String),
+    pub description: String,
 }
 
-type EmploymentHistory = Vec<HistoryEntry>;
+pub type EmploymentHistory = Vec<HistoryEntry>;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Skill {
+pub struct Skill {
     name: String,
 }
 
-type SkillSet = Vec<Skill>;
+pub type SkillSet = Vec<Skill>;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Certification {
+pub struct Certification {
     date_issued: String,
     name: String,
 }
 
-type Certifications = Vec<Certification>;
+pub type Certifications = Vec<Certification>;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Project {
-    name: String,
-    descriptions: Vec<String>,
+pub struct Project {
+    pub name: String,
+    pub description: String,
+    pub deployment: String,
 }
 
-type Projects = Vec<Project>;
+pub type Projects = Vec<Project>;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct EducationEntry {
+pub struct EducationEntry {
     dates: (String, String),
     name: String,
     location: String,
     description: String,
 }
 
-type Education = Vec<EducationEntry>;
+pub type Education = Vec<EducationEntry>;
 
 struct Font;
 // style?

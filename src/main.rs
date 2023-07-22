@@ -6,14 +6,12 @@ mod models;
 mod os;
 
 use errors::Error;
-use file_io::{ConfigFileHandler, FileHandler};
+
 fn main() -> Result<(), Error> {
     //
 
-    // cli::CLParser::handle_input()?;
+    cli::CLParser::handle_input()?;
 
-    ConfigFileHandler::write(models::DocumentShape::default())?;
-    ConfigFileHandler::read()?;
     //
 
     Ok(())

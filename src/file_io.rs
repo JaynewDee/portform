@@ -14,9 +14,9 @@ impl FileHandler<'_, DocumentShape> for ConfigFileHandler {
     fn read() -> Result<DocumentShape, anyhow::Error> {
         let temp_path = os::get_os_config_path().0;
         let json = std::fs::read_to_string(temp_path)?;
-        let document: DocumentShape = serde_json::from_str(&json)?;
-        println!("{:#?}", document);
-        Ok(document)
+        let document_config: DocumentShape = serde_json::from_str(&json)?;
+
+        Ok(document_config)
     }
 
     fn write(data: DocumentShape) -> Result<(), anyhow::Error> {
