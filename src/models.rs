@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 // General Sections
 #[derive(Serialize, Deserialize, Debug)]
-struct DocumentShape {
+pub struct DocumentShape {
     header: Option<Header>,
     summary: Option<Summary>,
     employment_history: Option<EmploymentHistory>,
@@ -13,6 +13,19 @@ struct DocumentShape {
     certifications: Option<Certifications>,
 }
 
+impl Default for DocumentShape {
+    fn default() -> Self {
+        Self {
+            header: None,
+            summary: None,
+            employment_history: None,
+            projects: None,
+            contact_details: None,
+            skillset: None,
+            certifications: None,
+        }
+    }
+}
 #[derive(Serialize, Deserialize, Debug)]
 struct Header {
     name: String,

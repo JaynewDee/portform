@@ -1,5 +1,9 @@
-use crate::errors::Error;
+use super::errors::Error;
+use super::generate::ResumeGenerator;
+
 use clap::{Arg, ArgMatches, Command};
+use std::fs::File;
+use std::io::BufWriter;
 pub struct Cli;
 
 impl Cli {
@@ -9,6 +13,7 @@ impl Cli {
             .author("Joshua Newell Diehl <jdiehl2236@gmail.com>")
             .about("PDF Resume Builder")
             .subcommand(Subcommands::set())
+            .subcommand(Subcommands::write())
             .arg_required_else_help(true)
             .get_matches()
     }
@@ -16,14 +21,23 @@ impl Cli {
 
 struct Subcommands;
 
-impl Subcommands {
-    pub fn set() -> Command {
+trait Operator {
+    fn set() -> Command;
+    fn write() -> Command;
+}
+
+impl Operator for Subcommands {
+    fn set() -> Command {
         let set_header = move |args| Command::new("header").args(args);
         let set_title = move |args| Command::new("title").args(args);
 
         Command::new("set")
             .subcommand(set_header(Arguments::header()))
             .subcommand(set_title(Arguments::title()))
+    }
+
+    fn write() -> Command {
+        Command::new("write")
     }
 }
 
@@ -49,19 +63,21 @@ impl Arguments {
 pub struct CLParser;
 
 impl CLParser {
-    pub fn handle_input_arguments() -> Result<(), Error> {
+    /// Handle top-level command
+    pub fn handle_input() -> Result<(), Error> {
         let matches = Cli::matches();
 
         match matches.subcommand() {
-            Some(("set", matches)) => Self::handle_set_command(matches),
-            Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
+            Some(("set", matches)) => Self::handle_set_command(matches)?,
+            Some(("write", matches)) => Self::handle_write_command(matches)?,
+            Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized", unknown),
             None => eprintln!("No matches found for subcommand..."),
         };
 
         Ok(())
     }
 
-    fn handle_set_command(matches: &ArgMatches) {
+    fn handle_set_command(matches: &ArgMatches) -> Result<(), Error> {
         match matches.subcommand() {
             Some(("header", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
@@ -73,5 +89,20 @@ impl CLParser {
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
             None => eprintln!("No matches found for subcommand..."),
         };
+
+        Ok(())
+    }
+
+    fn handle_write_command(matches: &ArgMatches) -> Result<(), Error> {
+        println!("{:#?}", matches.subcommand());
+        let generator = ResumeGenerator::new("My_New_Resume".to_string());
+        let (doc, _pg_idx, _layer_idx) = generator.doc;
+
+        let file = File::create(generator.filename)?;
+        let buffer_writer = &mut BufWriter::new(file);
+
+        doc.save(buffer_writer)?;
+
+        Ok(())
     }
 }
