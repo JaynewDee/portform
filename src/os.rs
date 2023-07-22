@@ -19,22 +19,22 @@ impl UserOS {
 }
 
 #[derive(Debug)]
-pub struct WriteDestination(pub PathBuf);
+pub struct TempPath(pub PathBuf);
 
-impl TryFrom<UserOS> for WriteDestination {
+impl TryFrom<UserOS> for TempPath {
     type Error = anyhow::Error;
     fn try_from(value: UserOS) -> Result<Self, anyhow::Error> {
         let destination = match value {
-            UserOS::Linux | UserOS::MacOS => PathBuf::from("/tmp/"),
-            UserOS::Windows => std::env::temp_dir(),
+            UserOS::Linux | UserOS::MacOS => PathBuf::from("/tmp/").join("portform_config.json"),
+            UserOS::Windows => std::env::temp_dir().join("portform_config.json"),
         };
 
         Ok(Self(destination))
     }
 }
 
-pub fn get_os_tempdir() -> WriteDestination {
-    match WriteDestination::try_from(UserOS::get()) {
+pub fn get_os_config_path() -> TempPath {
+    match TempPath::try_from(UserOS::get()) {
         Ok(dest) => dest,
         Err(_) => panic!("Failed to query for User's OS type ... "),
     }
