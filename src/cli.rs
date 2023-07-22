@@ -1,4 +1,4 @@
-use super::api::{Header, HistoryEntry, Project, Skill, Summary};
+use super::api::{Certification, ContactDetails, Header, HistoryEntry, Project, Skill, Summary};
 use super::errors::Error;
 use super::file_io::{ConfigFileHandler, FileHandler};
 use super::generate::ResumeWriter;
@@ -32,6 +32,7 @@ impl Operator for Subcommands {
     fn list() -> Command {
         Command::new("list").subcommand(Command::new("config"))
     }
+
     fn set() -> Command {
         let set_filename = move |args| Command::new("filename").args(args);
         let set_title = move |args| Command::new("title").args(args);
@@ -41,6 +42,7 @@ impl Operator for Subcommands {
         let set_projects = move |args| Command::new("projects").args(args);
         let set_skillset = move |args| Command::new("skills").args(args);
         let set_contact_details = move |args| Command::new("contact").args(args);
+        let set_certifications = move |args| Command::new("certs").args(args);
 
         Command::new("set")
             .subcommand(set_filename(Arguments::filename()))
@@ -51,6 +53,7 @@ impl Operator for Subcommands {
             .subcommand(set_projects(Arguments::projects()))
             .subcommand(set_skillset(Arguments::skillset()))
             .subcommand(set_contact_details(Arguments::contact_details()))
+            .subcommand(set_certifications(Arguments::certifications()))
     }
 
     fn write() -> Command {
@@ -61,6 +64,22 @@ impl Operator for Subcommands {
 struct Arguments;
 
 impl Arguments {
+    pub fn get(args: &ArgMatches, item: &str) -> String {
+        args.get_one::<String>(item).unwrap().to_owned()
+    }
+
+    // Get optional String
+    pub fn get_opt(args: &ArgMatches, item: &str) -> Option<String> {
+        args.get_one::<String>(item).cloned()
+    }
+
+    // Handle unwrapping on None by providing an empty String
+    pub fn get_or(args: &ArgMatches, item: &str) -> String {
+        args.get_one::<String>(item)
+            .cloned()
+            .unwrap_or(String::with_capacity(7))
+    }
+
     pub fn filename() -> [Arg; 1] {
         [Arg::new("filename").required(true)]
     }
@@ -104,7 +123,7 @@ impl Arguments {
     }
 
     pub fn skillset() -> [Arg; 1] {
-        [Arg::new("")]
+        [Arg::new("name").required(true)]
     }
 
     pub fn contact_details() -> [Arg; 4] {
@@ -113,6 +132,13 @@ impl Arguments {
             Arg::new("website").long("website").required(true),
             Arg::new("phone").long("phone").required(false),
             Arg::new("address").long("address").required(false),
+        ]
+    }
+
+    pub fn certifications() -> [Arg; 2] {
+        [
+            Arg::new("issued").long("issued").required(true),
+            Arg::new("name").long("name").required(true),
         ]
     }
 }
@@ -152,35 +178,32 @@ impl CLParser {
 
         match matches.subcommand() {
             Some(("filename", args)) => {
-                document_config.filename = args.get_one::<String>("filename").cloned();
+                document_config.filename = Arguments::get_opt(args, "filename");
             }
             Some(("title", args)) => {
-                document_config.title = args.get_one::<String>("title").cloned()
+                document_config.title = Arguments::get_opt(args, "title");
             }
             Some(("header", args)) => {
-                let name = args.get_one::<String>("name").cloned().unwrap();
-                let profession = args.get_one::<String>("profession").cloned().unwrap();
+                let name = Arguments::get(args, "name");
+                let profession = Arguments::get(args, "name");
                 let header = Some(Header { name, profession });
                 document_config.header = header;
             }
             Some(("summary", args)) => {
                 let summary = Some(Summary {
-                    body: args.get_one::<String>("summary").cloned().unwrap(),
+                    body: Arguments::get(args, "summary"),
                 });
+
                 document_config.summary = summary;
             }
             Some(("employment", args)) => {
-                let position = args.get_one::<String>("position").cloned().unwrap();
-                let location = args.get_one::<String>("location").cloned().unwrap();
-                let start = args
-                    .get_one::<String>("start")
-                    .cloned()
-                    .unwrap_or(String::with_capacity(7));
-                let end = args
-                    .get_one::<String>("end")
-                    .cloned()
-                    .unwrap_or(String::with_capacity(7));
-                let description = args.get_one::<String>("description").cloned().unwrap();
+                let (position, location, start, end, description) = (
+                    Arguments::get(args, "position"),
+                    Arguments::get(args, "location"),
+                    Arguments::get_or(args, "start"),
+                    Arguments::get_or(args, "end"),
+                    Arguments::get(args, "description"),
+                );
 
                 let history_entry = HistoryEntry {
                     position,
@@ -196,14 +219,10 @@ impl CLParser {
                 }
             }
             Some(("projects", args)) => {
-                let name = args.get_one::<String>("name").cloned().unwrap();
-                let description = args.get_one::<String>("description").cloned().unwrap();
-                let deployment = args.get_one::<String>("deployment").cloned().unwrap();
-
                 let project_entry = Project {
-                    name,
-                    description,
-                    deployment,
+                    name: Arguments::get(args, "name"),
+                    description: Arguments::get(args, "description"),
+                    deployment: Arguments::get(args, "deployment"),
                 };
 
                 if let Some(vector) = document_config.projects.as_mut() {
@@ -213,14 +232,40 @@ impl CLParser {
                 }
             }
             Some(("skills", args)) => {
-                let name = args.get_one::<String>("name").unwrap().to_string();
+                let name = Arguments::get(args, "name");
 
                 let skill = Skill { name };
 
                 if let Some(vector) = document_config.skillset.as_mut() {
                     vector.push(skill);
                 } else {
-                    document_config.skillset = Some(vec![skill])
+                    let mut new_container = Vec::with_capacity(12);
+                    new_container.push(skill);
+                    document_config.skillset = Some(new_container);
+                }
+            }
+            Some(("contact", args)) => {
+                let contact_details = ContactDetails {
+                    email: Arguments::get(args, "email"),
+                    website: Arguments::get(args, "website"),
+                    phone: Arguments::get(args, "phone"),
+                    address: Arguments::get(args, "address"),
+                };
+
+                document_config.contact_details = Some(contact_details);
+            }
+            Some(("certs", args)) => {
+                let cert = Certification {
+                    date_issued: Arguments::get(args, "issued"),
+                    name: Arguments::get(args, "name"),
+                };
+
+                if let Some(vector) = document_config.certifications.as_mut() {
+                    vector.push(cert);
+                } else {
+                    let mut new_container = Vec::with_capacity(12);
+                    new_container.push(cert);
+                    document_config.certifications = Some(new_container);
                 }
             }
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),

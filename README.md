@@ -22,3 +22,7 @@ TODO
 - Use available data to write sections to pdf
 - custom error handling
 - write tests
+
+### _Features_
+
+> Write one of the starter templates and then edit in something like Acrobat.
