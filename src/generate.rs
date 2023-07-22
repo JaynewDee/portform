@@ -9,8 +9,6 @@ pub struct ResumeWriter {
 
 impl ResumeWriter {
     pub fn new() -> Self {
-        let date_string = FormattedDate::from(Utc::now());
-
         let title = "";
 
         Self {

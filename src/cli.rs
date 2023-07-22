@@ -1,7 +1,7 @@
+use super::api::{Header, HistoryEntry, Project, Skill, Summary};
 use super::errors::Error;
 use super::file_io::{ConfigFileHandler, FileHandler};
 use super::generate::ResumeWriter;
-use super::models::{Header, HistoryEntry, Summary};
 use clap::{Arg, ArgMatches, Command};
 
 pub struct Cli;
@@ -12,6 +12,7 @@ impl Cli {
             .version("1.0")
             .author("Joshua Newell Diehl <jdiehl2236@gmail.com>")
             .about("PDF Resume Builder")
+            .subcommand(Subcommands::list())
             .subcommand(Subcommands::set())
             .subcommand(Subcommands::write())
             .arg_required_else_help(true)
@@ -22,11 +23,15 @@ impl Cli {
 struct Subcommands;
 
 trait Operator {
+    fn list() -> Command;
     fn set() -> Command;
     fn write() -> Command;
 }
 
 impl Operator for Subcommands {
+    fn list() -> Command {
+        Command::new("list").subcommand(Command::new("config"))
+    }
     fn set() -> Command {
         let set_filename = move |args| Command::new("filename").args(args);
         let set_title = move |args| Command::new("title").args(args);
@@ -34,6 +39,7 @@ impl Operator for Subcommands {
         let set_summary = move |args| Command::new("summary").args(args);
         let set_employment_history = move |args| Command::new("employment").args(args);
         let set_projects = move |args| Command::new("projects").args(args);
+        let set_skillset = move |args| Command::new("skills").args(args);
         let set_contact_details = move |args| Command::new("contact").args(args);
 
         Command::new("set")
@@ -43,6 +49,7 @@ impl Operator for Subcommands {
             .subcommand(set_summary(Arguments::summary()))
             .subcommand(set_employment_history(Arguments::employment_history()))
             .subcommand(set_projects(Arguments::projects()))
+            .subcommand(set_skillset(Arguments::skillset()))
             .subcommand(set_contact_details(Arguments::contact_details()))
     }
 
@@ -78,11 +85,12 @@ impl Arguments {
     }
 
     // New History entry will be appended to vector, overwriting oldest if overflow
-    pub fn employment_history() -> [Arg; 4] {
+    pub fn employment_history() -> [Arg; 5] {
         [
             Arg::new("position").long("position").required(true),
             Arg::new("location").long("location").required(true),
-            Arg::new("dates").long("dates").required(false),
+            Arg::new("start").long("start").required(false),
+            Arg::new("end").long("end").required(false),
             Arg::new("description").long("description").required(true),
         ]
     }
@@ -93,6 +101,10 @@ impl Arguments {
             Arg::new("description").long("description").required(true),
             Arg::new("deployment").long("deployment").required(false),
         ]
+    }
+
+    pub fn skillset() -> [Arg; 1] {
+        [Arg::new("")]
     }
 
     pub fn contact_details() -> [Arg; 4] {
@@ -113,10 +125,23 @@ impl CLParser {
         let matches = Cli::matches();
 
         match matches.subcommand() {
+            Some(("list", matches)) => Self::handle_list_command(matches)?,
             Some(("set", matches)) => Self::handle_set_command(matches)?,
             Some(("write", matches)) => Self::handle_write_command(matches)?,
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized", unknown),
             None => eprintln!("No matches found for subcommand..."),
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_command(matches: &ArgMatches) -> Result<(), Error> {
+        match matches.subcommand() {
+            Some(("config", _)) => {
+                let config = ConfigFileHandler::read()?;
+                println!("{:#?}", &config);
+            }
+            _ => eprintln!("Unknown subcommand ... "),
         };
 
         Ok(())
@@ -147,8 +172,14 @@ impl CLParser {
             Some(("employment", args)) => {
                 let position = args.get_one::<String>("position").cloned().unwrap();
                 let location = args.get_one::<String>("location").cloned().unwrap();
-                let start = args.get_one::<String>("start").cloned().unwrap();
-                let end = args.get_one::<String>("end").cloned().unwrap();
+                let start = args
+                    .get_one::<String>("start")
+                    .cloned()
+                    .unwrap_or(String::with_capacity(7));
+                let end = args
+                    .get_one::<String>("end")
+                    .cloned()
+                    .unwrap_or(String::with_capacity(7));
                 let description = args.get_one::<String>("description").cloned().unwrap();
 
                 let history_entry = HistoryEntry {
@@ -158,11 +189,39 @@ impl CLParser {
                     description,
                 };
 
-                document_config
-                    .employment_history
-                    .as_mut()
-                    .unwrap()
-                    .push(history_entry);
+                if let Some(vector) = document_config.employment_history.as_mut() {
+                    vector.push(history_entry);
+                } else {
+                    document_config.employment_history = Some(vec![history_entry]);
+                }
+            }
+            Some(("projects", args)) => {
+                let name = args.get_one::<String>("name").cloned().unwrap();
+                let description = args.get_one::<String>("description").cloned().unwrap();
+                let deployment = args.get_one::<String>("deployment").cloned().unwrap();
+
+                let project_entry = Project {
+                    name,
+                    description,
+                    deployment,
+                };
+
+                if let Some(vector) = document_config.projects.as_mut() {
+                    vector.push(project_entry);
+                } else {
+                    document_config.projects = Some(vec![project_entry]);
+                }
+            }
+            Some(("skills", args)) => {
+                let name = args.get_one::<String>("name").unwrap().to_string();
+
+                let skill = Skill { name };
+
+                if let Some(vector) = document_config.skillset.as_mut() {
+                    vector.push(skill);
+                } else {
+                    document_config.skillset = Some(vec![skill])
+                }
             }
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
             None => eprintln!("No matches found for subcommand..."),

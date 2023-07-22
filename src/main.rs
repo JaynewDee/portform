@@ -1,8 +1,8 @@
+mod api;
 mod cli;
 mod errors;
 mod file_io;
 mod generate;
-mod models;
 mod os;
 
 use errors::Error;
