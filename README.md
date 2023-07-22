@@ -11,9 +11,14 @@ I cancelled my subscription to build a personalized resume generator!
 instead of writing to file and requiring incremental writes,
 could we make live updates to the document through some form of socket connection???
 
+___
+___
+
 TODO
 
 - Handle all command parsing
 - Write command results to file according to serialized structs
 - Read and deserialize data from file
 - Use available data to write sections to pdf
+- custom error handling
+- write tests

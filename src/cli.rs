@@ -1,4 +1,4 @@
-use clap::{arg, Arg, ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command};
 
 pub struct Cli;
 
@@ -12,36 +12,50 @@ impl Cli {
             .arg_required_else_help(true)
             .get_matches()
     }
-
-    pub fn handle_arguments(args: ArgMatches) {
-        unimplemented!()
-    }
 }
 
 struct Subcommands;
 
 impl Subcommands {
     pub fn set() -> Command {
+        let set_header = move |args| Command::new("header").args(args);
+        let set_title = move |args| Command::new("title").args(args);
+
         Command::new("set")
-            .arg(Arguments::title())
-            .arg(Arguments::header())
-            .subcommand(
-            Command::new("set")
-                .arg(arg!(-n --name <HUMAN_NAME> "Name of human professional"))
-                .arg(arg!(-prof --profession <PRACTICING_PROFESSION> "Human's professional title")),
-        )
+            .subcommand(set_header(Arguments::header()))
+            .subcommand(set_title(Arguments::title()))
     }
 }
 
 struct Arguments;
 
 impl Arguments {
-    pub fn title() -> Arg {
-        arg!(-t --title <DOCUMENT_TITLE> "Title of PDF document").required(false)
+    pub fn title() -> [Arg; 1] {
+        [Arg::new("title").short('t').required(false)]
     }
 
-    pub fn header() -> Arg {
-        arg!(-head --header <NAME_AND_PROFESSION> "Name of wielder with profession subtitle")
-            .required(false)
+    pub fn header() -> [Arg; 2] {
+        [
+            Arg::new("name").short('n').long("name").required(true),
+            Arg::new("profession")
+                .short('p')
+                .long("profession")
+                .required(true),
+        ]
+    }
+}
+
+pub struct CLParser;
+
+impl CLParser {
+    pub fn handle_arguments() {
+        let matches = Cli::matches();
+
+        match matches.subcommand() {
+            Some(("header", matches)) => println!("{:#?}", matches),
+            Some(("title", matches)) => println!("{:#?}", matches),
+            Some((unknown, _)) => println!("Subcommand {:#?} not recognized.", unknown),
+            None => eprintln!("No matches found for subcommand..."),
+        };
     }
 }

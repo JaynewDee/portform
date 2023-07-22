@@ -9,11 +9,9 @@ mod models;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get input commands and their data
 
-    let arguments = cli::Cli::matches();
+    cli::CLParser::handle_arguments();
 
-    println!("{:#?}", &arguments);
-
-    let generator = ResumeGenerator::default();
+    let generator = ResumeGenerator::new("My_New_Resume".to_string());
     let (doc, _pg_idx, _layer_idx) = generator.doc;
 
     let file = File::create(generator.filename)?;
@@ -32,9 +30,8 @@ pub struct ResumeGenerator {
     pages: Option<Vec<PdfPage>>,
 }
 
-impl Default for ResumeGenerator {
-    fn default() -> Self {
-        let title = "My_New_Resume".to_string();
+impl ResumeGenerator {
+    pub fn new(title: String) -> Self {
         let date_string: String = Utc::now()
             .to_string()
             .chars()
@@ -53,8 +50,4 @@ impl Default for ResumeGenerator {
             pages: None,
         }
     }
-}
-
-impl ResumeGenerator {
-    pub fn initialize() {}
 }
