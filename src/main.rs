@@ -12,7 +12,7 @@ use errors::Error;
 fn main() -> Result<(), Error> {
     // Get input commands and their data
 
-    cli::CLParser::handle_arguments();
+    cli::CLParser::handle_input_arguments()?;
 
     let generator = ResumeGenerator::new("My_New_Resume".to_string());
     let (doc, _pg_idx, _layer_idx) = generator.doc;

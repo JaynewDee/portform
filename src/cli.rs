@@ -48,16 +48,24 @@ impl Arguments {
 pub struct CLParser;
 
 impl CLParser {
-    pub fn handle_arguments() -> Result<(), Error> {
+    pub fn handle_input_arguments() -> Result<(), Error> {
         let matches = Cli::matches();
 
         match matches.subcommand() {
-            Some(("header", matches)) => println!("{:#?}", matches),
-            Some(("title", matches)) => println!("{:#?}", matches),
-            Some((unknown, _)) => println!("Subcommand {:#?} not recognized.", unknown),
+            Some(("set", matches)) => Self::handle_set_command(matches),
+            Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
             None => eprintln!("No matches found for subcommand..."),
         };
 
         Ok(())
+    }
+
+    fn handle_set_command(matches: &ArgMatches) {
+        match matches.subcommand() {
+            Some(("header", args)) => println!("{:#?}", args.get_one::<String>("name")),
+            Some(("title", args)) => println!("{:#?}", args),
+            Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
+            None => eprintln!("No matches found for subcommand..."),
+        };
     }
 }
