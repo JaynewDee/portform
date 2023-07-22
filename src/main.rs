@@ -5,6 +5,7 @@ mod file_io;
 mod generate;
 mod os;
 
+use cli::Handler;
 use errors::Error;
 
 fn main() -> Result<(), Error> {

@@ -145,9 +145,16 @@ impl Arguments {
 
 pub struct CLParser;
 
-impl CLParser {
+pub trait Handler<M, E> {
+    fn handle_input() -> Result<(), E>;
+    fn handle_list_command(m: &M) -> Result<(), E>;
+    fn handle_set_command(m: &M) -> Result<(), E>;
+    fn handle_write_command(m: &M) -> Result<(), E>;
+}
+
+impl Handler<ArgMatches, anyhow::Error> for CLParser {
     /// Handle top-level command
-    pub fn handle_input() -> Result<(), Error> {
+    fn handle_input() -> Result<(), Error> {
         let matches = Cli::matches();
 
         match matches.subcommand() {
