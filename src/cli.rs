@@ -1,5 +1,5 @@
+use crate::errors::Error;
 use clap::{Arg, ArgMatches, Command};
-
 pub struct Cli;
 
 impl Cli {
@@ -48,7 +48,7 @@ impl Arguments {
 pub struct CLParser;
 
 impl CLParser {
-    pub fn handle_arguments() {
+    pub fn handle_arguments() -> Result<(), Error> {
         let matches = Cli::matches();
 
         match matches.subcommand() {
@@ -57,5 +57,7 @@ impl CLParser {
             Some((unknown, _)) => println!("Subcommand {:#?} not recognized.", unknown),
             None => eprintln!("No matches found for subcommand..."),
         };
+
+        Ok(())
     }
 }

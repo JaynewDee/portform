@@ -4,9 +4,12 @@ use std::fs::File;
 use std::io::BufWriter;
 
 mod cli;
+mod errors;
 mod models;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+use errors::Error;
+
+fn main() -> Result<(), Error> {
     // Get input commands and their data
 
     cli::CLParser::handle_arguments();
