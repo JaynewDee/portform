@@ -31,7 +31,8 @@ struct Arguments;
 
 impl Arguments {
     pub fn title() -> [Arg; 1] {
-        [Arg::new("title").short('t').required(false)]
+        // Leave out length variants to disclude flag
+        [Arg::new("title").required(true)]
     }
 
     pub fn header() -> [Arg; 2] {
@@ -62,7 +63,12 @@ impl CLParser {
 
     fn handle_set_command(matches: &ArgMatches) {
         match matches.subcommand() {
-            Some(("header", args)) => println!("{:#?}", args.get_one::<String>("name")),
+            Some(("header", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                println!("{:#?}", &name);
+                let profession = args.get_one::<String>("profession").unwrap();
+                println!("{:#?}", &profession);
+            }
             Some(("title", args)) => println!("{:#?}", args),
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized.", unknown),
             None => eprintln!("No matches found for subcommand..."),
