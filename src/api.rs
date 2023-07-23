@@ -15,6 +15,19 @@ pub struct DocumentShape {
     pub certifications: Option<Certifications>,
 }
 
+#[derive(Debug)]
+pub struct DocumentData {
+    pub filename: String,
+    pub title: String,
+    pub header: Header,
+    pub summary: Summary,
+    pub employment_history: EmploymentHistory,
+    pub projects: Projects,
+    pub contact_details: ContactDetails,
+    pub skillset: SkillSet,
+    pub certifications: Certifications,
+}
+
 impl Default for DocumentShape {
     fn default() -> Self {
         Self {
@@ -31,18 +44,18 @@ impl Default for DocumentShape {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Header {
     pub name: String,
     pub profession: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Summary {
     pub body: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContactDetails {
     pub email: String,
     pub website: String,
@@ -50,7 +63,7 @@ pub struct ContactDetails {
     pub address: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HistoryEntry {
     pub position: String,
     pub location: String,
@@ -60,14 +73,14 @@ pub struct HistoryEntry {
 
 pub type EmploymentHistory = Vec<HistoryEntry>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Skill {
     pub name: String,
 }
 
 pub type SkillSet = Vec<Skill>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Certification {
     pub date_issued: String,
     pub name: String,
@@ -75,7 +88,7 @@ pub struct Certification {
 
 pub type Certifications = Vec<Certification>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Project {
     pub name: String,
     pub description: String,
@@ -84,7 +97,7 @@ pub struct Project {
 
 pub type Projects = Vec<Project>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EducationEntry {
     pub dates: (String, String),
     pub name: String,

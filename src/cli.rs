@@ -1,8 +1,9 @@
 use super::api::{Certification, ContactDetails, Header, HistoryEntry, Project, Skill, Summary};
 use super::errors::Error;
 use super::file_io::{ConfigFileHandler, FileHandler};
-use super::generate::ResumeWriter;
+use super::generate::{assets, ResumeWriter};
 use clap::{Arg, ArgMatches, Command};
+use printpdf::*;
 
 pub struct Cli;
 
@@ -149,7 +150,7 @@ pub trait Handler<M, E> {
     fn handle_input() -> Result<(), E>;
     fn handle_list_command(m: &M) -> Result<(), E>;
     fn handle_set_command(m: &M) -> Result<(), E>;
-    fn handle_write_command(m: &M) -> Result<(), E>;
+    fn handle_write_command() -> Result<(), E>;
 }
 
 impl Handler<ArgMatches, anyhow::Error> for CLParser {
@@ -160,7 +161,7 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
         match matches.subcommand() {
             Some(("list", matches)) => Self::handle_list_command(matches)?,
             Some(("set", matches)) => Self::handle_set_command(matches)?,
-            Some(("write", matches)) => Self::handle_write_command(matches)?,
+            Some(("write", _)) => Self::handle_write_command()?,
             Some((unknown, _)) => eprintln!("Subcommand {:#?} not recognized", unknown),
             None => eprintln!("No matches found for subcommand..."),
         };
@@ -284,10 +285,25 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
         Ok(())
     }
 
-    fn handle_write_command(matches: &ArgMatches) -> Result<(), Error> {
-        println!("{:#?}", matches.subcommand());
-        let generator = ResumeWriter::new();
-        let (doc, _pg_idx, _layer_idx) = generator.doc;
+    fn handle_write_command() -> Result<(), Error> {
+        let document_data = ConfigFileHandler::read()?;
+        let data = super::generate::assets(&document_data)?;
+
+        println!("{:#?}", &data);
+
+        let writer = ResumeWriter::new(data.title).load_fonts();
+        let font = writer.get_primary_font();
+        let (doc, pg1, layer1) = writer.doc;
+        let current_layer = doc.get_page(pg1).get_layer(layer1);
+
+        if let Some(header) = document_data.header {
+            ResumeWriter::header_section(current_layer, font, header.name, header.profession);
+        }
+        let mut buff_writer = super::file_io::ConfigFileHandler::init_write_file(data.filename);
+        /*
+           Write sections to file buffer
+        */
+        doc.save(&mut buff_writer)?;
 
         Ok(())
     }
