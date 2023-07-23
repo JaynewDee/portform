@@ -1,9 +1,8 @@
 use super::api::{Certification, ContactDetails, Header, HistoryEntry, Project, Skill, Summary};
 use super::errors::Error;
 use super::file_io::{ConfigFileHandler, FileHandler};
-use super::generate::{assets, ResumeWriter};
+use super::generate::ResumeWriter;
 use clap::{Arg, ArgMatches, Command};
-use printpdf::*;
 
 pub struct Cli;
 
@@ -129,8 +128,8 @@ impl Arguments {
 
     pub fn contact_details() -> [Arg; 4] {
         [
-            Arg::new("email").long("email").required(true),
-            Arg::new("website").long("website").required(true),
+            Arg::new("email").long("email").required(false),
+            Arg::new("website").long("website").required(false),
             Arg::new("phone").long("phone").required(false),
             Arg::new("address").long("address").required(false),
         ]
@@ -193,7 +192,7 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
             }
             Some(("header", args)) => {
                 let name = Arguments::get(args, "name");
-                let profession = Arguments::get(args, "name");
+                let profession = Arguments::get(args, "profession");
                 let header = Some(Header { name, profession });
                 document_config.header = header;
             }
@@ -297,8 +296,26 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
         let current_layer = doc.get_page(pg1).get_layer(layer1);
 
         if let Some(header) = document_data.header {
-            ResumeWriter::header_section(current_layer, font, header.name, header.profession);
+            ResumeWriter::header_section(
+                current_layer.clone(),
+                font.clone(),
+                header.name,
+                header.profession,
+            );
         }
+        if let Some(contact_section) = document_data.contact_details {
+            ResumeWriter::contact_section(
+                current_layer,
+                font,
+                (
+                    contact_section.email,
+                    contact_section.website,
+                    contact_section.phone,
+                    contact_section.address,
+                ),
+            )
+        }
+
         let mut buff_writer = super::file_io::ConfigFileHandler::init_write_file(data.filename);
         /*
            Write sections to file buffer
