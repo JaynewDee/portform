@@ -55,7 +55,7 @@ pub struct Summary {
     pub body: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ContactDetails {
     pub email: String,
     pub website: String,

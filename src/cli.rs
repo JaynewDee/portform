@@ -64,8 +64,16 @@ impl Operator for Subcommands {
 struct Arguments;
 
 impl Arguments {
+    /*
+       Currently, gets will panic on None
+       Need to implement reuse of previous values on None/Err
+    */
     pub fn get(args: &ArgMatches, item: &str) -> String {
-        args.get_one::<String>(item).unwrap().to_owned()
+        if let Some(arg) = args.get_one::<String>(item) {
+            arg.to_owned()
+        } else {
+            "".to_string()
+        }
     }
 
     // Get optional String
@@ -181,6 +189,7 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
     }
 
     fn handle_set_command(matches: &ArgMatches) -> Result<(), Error> {
+        // Present options mutate config
         let mut document_config = ConfigFileHandler::read()?;
 
         match matches.subcommand() {
@@ -252,14 +261,22 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
                 }
             }
             Some(("contact", args)) => {
-                let contact_details = ContactDetails {
-                    email: Arguments::get(args, "email"),
-                    website: Arguments::get(args, "website"),
-                    phone: Arguments::get(args, "phone"),
-                    address: Arguments::get(args, "address"),
+                let mut details = document_config.contact_details.as_mut().unwrap();
+
+                if let Some(email) = Arguments::get_opt(args, "email") {
+                    details.email = email;
                 };
 
-                document_config.contact_details = Some(contact_details);
+                if let Some(website) = Arguments::get_opt(args, "website") {
+                    details.website = website;
+                };
+
+                if let Some(phone) = Arguments::get_opt(args, "phone") {
+                    details.phone = phone;
+                }
+                if let Some(address) = Arguments::get_opt(args, "address") {
+                    details.address = address;
+                }
             }
             Some(("certs", args)) => {
                 let cert = Certification {
@@ -285,12 +302,10 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
     }
 
     fn handle_write_command() -> Result<(), Error> {
+        optick::event!();
         let document_data = ConfigFileHandler::read()?;
-        let data = super::generate::assets(&document_data)?;
 
-        println!("{:#?}", &data);
-
-        let writer = ResumeWriter::new(data.title).load_fonts();
+        let writer = ResumeWriter::new(document_data.title.clone().unwrap()).load_fonts();
         let font = writer.get_primary_font();
         let (doc, pg1, layer1) = writer.doc;
         let current_layer = doc.get_page(pg1).get_layer(layer1);
@@ -303,6 +318,7 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
                 header.profession,
             );
         }
+
         if let Some(contact_section) = document_data.contact_details {
             ResumeWriter::contact_section(
                 current_layer,
@@ -316,7 +332,9 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
             )
         }
 
-        let mut buff_writer = super::file_io::ConfigFileHandler::init_write_file(data.filename);
+        let mut buff_writer = super::file_io::ConfigFileHandler::init_write_file(
+            document_data.filename.clone().unwrap(),
+        );
         /*
            Write sections to file buffer
         */
