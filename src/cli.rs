@@ -1,4 +1,4 @@
-use super::api::{Certification, ContactDetails, Header, HistoryEntry, Project, Skill, Summary};
+use super::api::{Certification, Header, HistoryEntry, Project, Skill, Summary};
 use super::errors::Error;
 use super::file_io::{ConfigFileHandler, FileHandler};
 use super::generate::ResumeWriter;
@@ -99,11 +99,11 @@ impl Arguments {
 
     pub fn header() -> [Arg; 2] {
         [
-            Arg::new("name").short('n').long("name").required(true),
+            Arg::new("name").short('n').long("name").required(false),
             Arg::new("profession")
                 .short('p')
                 .long("profession")
-                .required(true),
+                .required(false),
         ]
     }
 
@@ -200,10 +200,15 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
                 document_config.title = Arguments::get_opt(args, "title");
             }
             Some(("header", args)) => {
-                let name = Arguments::get(args, "name");
-                let profession = Arguments::get(args, "profession");
-                let header = Some(Header { name, profession });
-                document_config.header = header;
+                let header_config = document_config.header.as_mut().unwrap();
+
+                if let Some(name) = Arguments::get_opt(args, "name") {
+                    header_config.name = name;
+                }
+
+                if let Some(prof) = Arguments::get_opt(args, "profession") {
+                    header_config.profession = prof;
+                };
             }
             Some(("summary", args)) => {
                 let summary = Some(Summary {
@@ -302,7 +307,6 @@ impl Handler<ArgMatches, anyhow::Error> for CLParser {
     }
 
     fn handle_write_command() -> Result<(), Error> {
-        optick::event!();
         let document_data = ConfigFileHandler::read()?;
 
         let writer = ResumeWriter::new(document_data.title.clone().unwrap()).load_fonts();

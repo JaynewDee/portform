@@ -1,4 +1,4 @@
-use super::api::{DocumentData, DocumentShape};
+use super::api::DocumentShape;
 use super::os;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -32,22 +32,6 @@ impl FileHandler<'_, DocumentShape> for ConfigFileHandler {
 }
 
 impl ConfigFileHandler {
-    pub fn unpack(data: &DocumentShape) -> Result<DocumentData, anyhow::Error> {
-        let unpacked = DocumentData {
-            filename: data.filename.clone().unwrap(),
-            title: data.title.clone().unwrap(),
-            header: data.header.clone().unwrap(),
-            summary: data.summary.clone().unwrap(),
-            contact_details: data.contact_details.clone().unwrap(),
-            employment_history: data.employment_history.clone().unwrap(),
-            projects: data.projects.clone().unwrap(),
-            skillset: data.skillset.clone().unwrap(),
-            certifications: data.certifications.clone().unwrap(),
-        };
-
-        Ok(unpacked)
-    }
-
     pub fn init_write_file(filename: String) -> BufWriter<File> {
         let write_file = std::fs::File::create(filename).unwrap();
         BufWriter::new(write_file)

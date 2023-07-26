@@ -3,7 +3,6 @@ use std::fs::File;
 use printpdf::*;
 
 use super::consts;
-use super::{api::DocumentData, file_io::ConfigFileHandler};
 
 #[allow(dead_code)]
 pub struct ResumeWriter {
@@ -28,7 +27,9 @@ impl ResumeWriter {
             .add_external_font(File::open("assets/fonts/lucon.ttf").unwrap())
             .unwrap()
             .to_owned();
+
         self.fonts.push(lucon);
+
         self
     }
 
@@ -46,7 +47,7 @@ impl ResumeWriter {
 
         let _blue = color::Color::Rgb(Rgb::new(0.0, 0.0, 200.0, None));
         layer.set_font(&font, 24.0);
-        layer.set_text_cursor(Mm(10.0), Mm(280.0));
+        layer.set_text_cursor(Mm(10.0), Mm(285.0));
         layer.set_line_height(20.0);
         layer.set_character_spacing(3.0);
         layer.set_text_rendering_mode(TextRenderingMode::Stroke);
@@ -76,36 +77,40 @@ impl ResumeWriter {
         layer.set_text_rendering_mode(TextRenderingMode::Stroke);
 
         layer.set_font(&font, 10.0);
-        layer.set_text_cursor(Mm(10.0), Mm(260.0));
-        layer.write_text("Contact", &font);
+        layer.set_text_cursor(Mm(10.0), Mm(270.0));
+        layer.write_text("CONTACT DETAILS", &font);
+
+        layer.set_line_height(11.0);
 
         let underline = Line {
             points: vec![(Point::new(Mm(160.0), Mm(275.0)), true)],
-            is_closed: false,
+            is_closed: true,
             has_fill: true,
             has_stroke: true,
             is_clipping_path: false,
         };
-        layer.set_fill_color(color::Color::Rgb(Rgb::new(0.0, 0.0, 200.0, None)));
+
+        layer.set_fill_color(color::Color::Rgb(Rgb::new(0.0, 0.0, 210.0, None)));
         layer.add_shape(underline);
 
         layer.add_line_break();
-        layer.set_font(&font, 8.0);
-        layer.write_text(email, &font);
+        layer.set_font(&font, 9.0);
+        layer.write_text(format!("EMAIL:      {}", &email), &font);
 
         layer.add_line_break();
-        layer.write_text(website, &font);
+        layer.write_text(format!("PORTFOLIO:  {}", &website), &font);
 
         layer.add_line_break();
-        layer.write_text(phone, &font);
+        layer.write_text(format!("PHONE #:    {}", phone), &font);
 
         layer.add_line_break();
-        layer.write_text(address, &font);
+        layer.write_text(format!("LOCATION:   {}", address), &font);
 
         layer.end_text_section();
     }
 }
 
-pub fn assets(document: &super::api::DocumentShape) -> Result<DocumentData, anyhow::Error> {
-    Ok(ConfigFileHandler::unpack(document)?)
+#[allow(dead_code, unused_variables)]
+pub fn assets(document: &super::api::DocumentShape) -> Result<(), anyhow::Error> {
+    Ok(())
 }
